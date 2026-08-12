@@ -14,7 +14,7 @@ AEGIS is a defensive transaction firewall for wallets and AI agents that can pro
 
 https://aegis-6kv1tl.v2.appdeploy.ai/
 
-The GitHub version is now **standalone**: it no longer requires AppDeploy to run locally. The hosted demo remains available while this repository uses its own Express API and the official OpenAI Node SDK.
+The GitHub version is standalone and uses its own Express API plus the official OpenAI Node SDK.
 
 ## Quick start
 
@@ -63,6 +63,9 @@ ALLOW / REQUIRE_HUMAN / BLOCK
       |
       v
 SHA-256 decision fingerprint
+      |
+      v
+AegisGuard.sol deterministic enforcement
 ```
 
 ## Current MVP capabilities
@@ -80,22 +83,39 @@ SHA-256 decision fingerprint
 - Real SHA-256 evidence fingerprint generated server-side.
 - Responsive presentation UI and wallet-address capture from an injected EVM wallet.
 
-## Onchain guard
+## Onchain enforcement demo
 
-`contracts/AegisGuard.sol` is the first onchain enforcement component. It currently enforces two deterministic rules:
+`contracts/AegisGuard.sol` is a real Solidity execution boundary for the hackathon demo. It can:
 
-- maximum native-token value per transaction;
-- optional blocking of ERC-20 unlimited approvals.
+- enforce a maximum native-token value per transaction;
+- block ERC-20 `approve(spender, uint256.max)`;
+- block `setApprovalForAll(..., true)`;
+- execute an allowed call only after deterministic policy validation;
+- emit an onchain `TransactionAllowed` event tied to an evidence hash.
 
-It also supports a decision-evidence hash for future attestation flows.
+Run the app and open:
 
-Compile it directly with:
-
-```bash
-npx --yes solc@0.8.30 --bin contracts/AegisGuard.sol --output-dir .solc-out
+```text
+http://localhost:5173/guard-demo.html
 ```
 
-The contract is deliberately dependency-free for the hackathon MVP. It is **not audited** and is not yet wired as a production Safe Guard or ERC-7579 module.
+Then:
+
+1. Connect a browser wallet.
+2. Switch to Arbitrum Sepolia when prompted.
+3. Click **Deploy AegisGuard** and approve the deployment in your wallet.
+4. Click **Simulate dangerous approval**. AEGIS performs a call against the deployed Solidity contract and expects an `UnlimitedApprovalBlocked` revert; no dangerous approval is broadcast.
+5. Optionally click **Send safe proof** to broadcast a zero-value allowed call and generate a real onchain success transaction.
+
+The deployment bytecode and ABI used by the browser are checked into `src/guardArtifact.ts`, and CI recompiles the Solidity source on every push.
+
+Compile manually with:
+
+```bash
+npm run compile:guard
+```
+
+The contract is **not audited**. The hackathon contract proves deterministic onchain enforcement; a production release should integrate equivalent policy logic into a reviewed Safe Guard / modular smart-account hook rather than treating this demo contract as a custody solution.
 
 ## API
 
@@ -136,11 +156,14 @@ backend/
   aegis.ts          Standalone defensive analysis engine
   index.ts          Express API + production static hosting
 contracts/
-  AegisGuard.sol    Minimal deterministic onchain guard
+  AegisGuard.sol    Deterministic onchain execution boundary
 src/
-  AegisApp.tsx      React hackathon UI
+  AegisApp.tsx      Main React hackathon UI
+  GuardDemo.tsx     Browser wallet deploy + onchain proof UI
+  guardArtifact.ts  Compiled ABI / deployment bytecode
   api.ts            Standalone HTTP adapter
-  index.css         Responsive visual system
+  index.css         Main responsive visual system
+  guard.css         Onchain demo visual system
 .github/workflows/
   ci.yml            TypeScript, Vite and Solidity validation
 ```
@@ -148,12 +171,13 @@ src/
 ## Scripts
 
 ```bash
-npm run dev        # frontend + API
-npm run dev:web    # frontend only
-npm run dev:api    # API only
+npm run dev             # frontend + API
+npm run dev:web         # frontend only
+npm run dev:api         # API only
 npm run typecheck
 npm run build
-npm start          # serve API; serves dist/ too after npm run build
+npm run compile:guard   # compile Solidity artifact locally
+npm start               # serve API; serves dist/ too after npm run build
 ```
 
 ## Production roadmap
@@ -164,7 +188,7 @@ npm start          # serve API; serves dist/ too after npm run build
 4. Contract/address threat intelligence and reputation signals.
 5. EIP-7702 delegate-code recursive analysis.
 6. Safe Guard / modular smart-account integration on Arbitrum.
-7. Signed or onchain decision attestations.
+7. Signed/onchain decision attestations with nonce, expiry and domain separation.
 8. Agent permissions: protocol allowlists, spend limits, expiry and human escalation.
 
 ## Security status
@@ -175,6 +199,7 @@ This is a **hackathon MVP, not an audited security product**. It must not be use
 
 - React 19 + TypeScript + Vite
 - Express
+- ethers v6 browser wallet integration
 - Official OpenAI Node SDK / Responses API
 - Arbitrum Sepolia JSON-RPC
 - Solidity 0.8.x
