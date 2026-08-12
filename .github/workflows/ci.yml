@@ -17,4 +17,12 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - name: Compile AegisGuard
-        run: npx --yes solc@0.8.30 --bin contracts/AegisGuard.sol --output-dir .solc-out
+        run: |
+          rm -rf .solc-out
+          npx --yes solc@0.8.30 --bin --abi contracts/AegisGuard.sol --output-dir .solc-out
+          echo 'AEGIS_GUARD_BYTECODE_BEGIN'
+          cat .solc-out/contracts_AegisGuard_sol_AegisGuard.bin
+          echo '\nAEGIS_GUARD_BYTECODE_END'
+          echo 'AEGIS_GUARD_ABI_BEGIN'
+          cat .solc-out/contracts_AegisGuard_sol_AegisGuard.abi
+          echo '\nAEGIS_GUARD_ABI_END'
