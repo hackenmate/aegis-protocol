@@ -20,6 +20,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: {
+        main: resolve(rootDir, 'index.html'),
+        guard: resolve(rootDir, 'guard-demo.html'),
+      },
       maxParallelFileOps: 128,
     },
   },
