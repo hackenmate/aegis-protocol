@@ -1,0 +1,47 @@
+# Tests
+
+## Test 1 - Detect a risky approval mismatch [sanity]
+Viewport: desktop
+Covers: core pre-sign analysis, POST /api/analyze, deterministic calldata checks, Arbitrum simulation, AI semantic review, verdict rendering
+Description: Verifies the presentation demo catches an excessive approval request that does not match the stated human intent.
+
+Steps:
+1. Click "Live demo"
+2. Wait for the security pipeline to finish
+3. Review the Decision panel
+
+Expected: A BLOCK or HUMAN REVIEW verdict is visible with a risk score, transaction intelligence and at least one approval or destination finding.
+
+## Test 2 - Analyze a safe native transfer
+Viewport: desktop
+Covers: POST /api/analyze normal path, native transfer decoding, RPC evidence, simulation result rendering
+Description: Verifies AEGIS produces a complete pre-sign report for a simple ETH transfer without calldata.
+
+Steps:
+1. Click "Safe transfer"
+2. Click "Analyze before signing"
+3. Wait for the Decision panel
+
+Expected: A verdict, risk score, RPC status, gas metric and decision fingerprint are visible.
+
+## Test 3 - Reject malformed transaction input on mobile
+Viewport: mobile
+Covers: backend validation guardrail, POST /api/analyze 400 handling, responsive form, user-visible error state
+Description: Verifies malformed EVM addresses are rejected instead of being treated as valid transaction evidence.
+
+Steps:
+1. Replace the TO value with "0x1234"
+2. Tap "Analyze before signing"
+3. Observe the form result
+
+Expected: A visible AEGIS error message appears and no verdict is rendered.
+
+## Test 4 - Surface analysis service failure
+Viewport: desktop
+Covers: POST /api/analyze failure handling, user-visible failure state
+Description: Verifies a backend failure is shown clearly instead of silently returning an incomplete decision.
+
+## Test 5 - Navigate architecture and opportunity on mobile
+Viewport: mobile
+Covers: responsive navigation, architecture explanation, business opportunity presentation
+Description: Verifies the MVP remains presentation-ready on a phone and clearly exposes both the technical story and business wedge.
